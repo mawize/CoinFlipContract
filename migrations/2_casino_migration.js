@@ -1,9 +1,9 @@
-const Lobby = artifacts.require("Lobby");
+const Casino = artifacts.require("Casino");
 
-module.exports = function(deployer) {
-  deployer.deploy(Lobby).then(function(instance){
+module.exports = function (deployer) {
+  deployer.deploy(Casino).then(function (instance) {
     console.log("Success");
-  }).catch(function(err){
+  }).catch(function (err) {
     console.log("Deploy failed " + err);
   });
 };
