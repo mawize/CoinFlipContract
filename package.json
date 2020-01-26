@@ -190,6 +190,7 @@
     "strict-uri-encode": "^1.1.0",
     "string_decoder": "^1.1.1",
     "strip-dirs": "^2.1.0",
+    "truffle": "^5.0.42",
     "truffle-hdwallet-provider": "^1.0.17"
   },
   "devDependencies": {},

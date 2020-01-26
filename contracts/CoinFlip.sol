@@ -8,8 +8,8 @@ contract CoinFlip is Betable {
     function bet() public payable {
         super.bet();
 
-        assert(count == 2);
-
-        setWinner(block.timestamp % 2);
+        if (count == 2) {
+            setWinner(block.timestamp % 2);
+        }
     }
 }

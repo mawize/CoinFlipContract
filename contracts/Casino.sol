@@ -10,27 +10,16 @@ contract Casino is Ownable {
     event betClosed(Betable bet);
     event betClaimed(address winner, uint256 yield);
 
-    function createFlipCoinBet() public payable {
-        CoinFlip g = new CoinFlip(address(uint160(address(this))));
+    function createFlipCoinBet() public payable returns (Betable) {
+        CoinFlip g = (new CoinFlip).value(msg.value)(
+            address(uint160(address(this)))
+        );
+        g.setOwner(msg.sender);
+
         games.push(g);
 
         emit betCreated(g);
-    }
-
-    function joinFlipCoinBet(uint256 index) public payable {
-        CoinFlip g = CoinFlip(address(games[index]));
-        g.bet();
-
-        emit betClosed(g);
-    }
-
-    function claimFlipCoinWin(uint256 index) public payable {
-        CoinFlip g = CoinFlip(address(games[index]));
-        address winner = g.getWinner();
-        uint256 yield = g.getYield();
-        g.destructor();
-
-        emit betClaimed(winner, yield);
+        return g;
     }
 
     function withdraw() public onlyOwner returns (uint256) {
