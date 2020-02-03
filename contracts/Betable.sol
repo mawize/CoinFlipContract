@@ -6,18 +6,20 @@ contract Betable is Ownable {
     address payable private house;
     uint256 private constant cut = 2; // percent
 
-    address[] internal participants;
+    address[] public participants;
     uint256 public count = 0;
 
-    uint256 private balance = 0;
+    uint256 public balance = 0;
     uint256 public amount = 0;
 
-    address private winner;
+    address public winner;
 
     modifier onlyWinner() {
         require(
-            msg.sender == winner,
-            "Access denied. Only the Winner can destroy this contract."
+            msg.sender == winner ||
+                (winner == 0x0000000000000000000000000000000000000000 &&
+                    msg.sender == owner),
+            "Access denied. Only the Winner can claim this contract."
         );
         _;
     }
@@ -34,47 +36,36 @@ contract Betable is Ownable {
             "Not enough value."
         );
 
-        participants.push(msg.sender);
+        participants.push(tx.origin);
         count++;
 
         balance += msg.value;
     }
 
-    function destructor() public payable onlyWinner {
-        uint256 toWinner = amount + getYield();
-        uint256 toHouse = balance - toWinner;
+    function claim() public payable onlyWinner {
+        if (count == 1) {
+            uint256 toTransfer = balance;
+            msg.sender.transfer(toTransfer);
+            balance = balance - toTransfer;
+        } else {
+            uint256 toWinner = getValue();
+            //msg.sender.transfer(toWinner);
+            balance = balance - toWinner;
 
-        assert(balance == toWinner + toHouse);
-
-        msg.sender.transfer(toWinner);
-        balance = balance - toWinner;
-
-        house.transfer(toHouse);
-        balance = balance - toHouse;
-
+            uint256 toHouse = balance;
+            require(house.send(toHouse));
+            balance = balance - toHouse;
+        }
         assert(balance == 0);
-
-        selfdestruct(msg.sender);
     }
 
     function setWinner(uint256 index) internal {
+        require(index < participants.length);
         winner = participants[index];
     }
 
-    function getWinner() public view returns (address) {
-        return winner;
-    }
-
-    function getBalance() public view returns (uint256) {
-        return balance;
-    }
-
-    function getYield() public view returns (uint256) {
-        return (amount * (100 - cut)) / 100;
-    }
-
-    function getParticipants() public view returns (uint256) {
-        return count;
+    function getValue() public view returns (uint256) {
+        return (balance * (100 - cut)) / 100;
     }
 
 }

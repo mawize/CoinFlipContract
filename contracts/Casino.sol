@@ -6,11 +6,9 @@ import "./CoinFlip.sol";
 contract Casino is Ownable {
     Betable[] public games;
 
-    event betCreated(Betable bet);
-    event betClosed(Betable bet);
-    event betClaimed(address winner, uint256 yield);
+    event betCreated(address bet);
 
-    function createFlipCoinBet() public payable returns (Betable) {
+    function createFlipCoinBet() public payable returns (address) {
         CoinFlip g = (new CoinFlip).value(msg.value)(
             address(uint160(address(this)))
         );
@@ -18,8 +16,8 @@ contract Casino is Ownable {
 
         games.push(g);
 
-        emit betCreated(g);
-        return g;
+        emit betCreated(address(g));
+        return address(g);
     }
 
     function withdraw() public onlyOwner returns (uint256) {
