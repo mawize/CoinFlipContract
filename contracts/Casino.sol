@@ -1,29 +1,21 @@
 pragma solidity >=0.4.21 <0.6.0;
 
-import "./Betable.sol";
+import "./Ownable.sol";
 import "./CoinFlip.sol";
 
+
 contract Casino is Ownable {
-    Betable[] public games;
 
-    event betCreated(address bet);
+    CoinFlip[] public games;
+    uint256 public count = 0;
 
-    function createFlipCoinBet() public payable returns (address) {
-        CoinFlip g = (new CoinFlip).value(msg.value)(
-            address(uint160(address(this)))
-        );
-        g.setOwner(msg.sender);
+    event GameCreated(address game);
 
-        games.push(g);
+    constructor() public Ownable() {}
 
-        emit betCreated(address(g));
-        return address(g);
-    }
-
-    function withdraw() public onlyOwner returns (uint256) {
-        uint256 toTransfer = address(this).balance;
-        msg.sender.transfer(toTransfer);
-        assert(address(this).balance == 0);
-        return toTransfer;
+    function createCoinFlip() public payable {
+        games.push((new CoinFlip).value(msg.value)(getOwner()));
+        count++;
+        emit GameCreated(address(games[count - 1]));
     }
 }

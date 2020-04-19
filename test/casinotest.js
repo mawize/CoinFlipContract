@@ -18,7 +18,26 @@ contract("Casino", async function (accounts) {
 
         const bet = await instance.games(0);
         const coinflip = await CoinFlip.at(bet);
-        console.log(coinflip);
+        await coinflip.bet(
+            { from: accounts[2], value: web3.utils.toWei("1", "ether") }
+        );
+        let value = await coinflip.getValue();
+        console.log("VALUE: " + value);
+        await coinflip.claim(
+            { from: accounts[2] }
+        );
+
+        let count = await instance.gamecount();
+        console.log("COUNT: " + count);
+
+        let balance = await coinflip.balance();
+        console.log("BALANCE: " + balance);
+
+        await instance.collect(0, { from: accounts[0] });
+
+        balance = await coinflip.balance();
+        console.log("BALANCE: " + balance);
+        assert(balance == 0);
 
         /*.returnValues[0];
         let coinflip = await CoinFlip.deployed(addr);
