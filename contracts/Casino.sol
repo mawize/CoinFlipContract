@@ -13,8 +13,8 @@ contract Casino is Ownable {
 
     constructor() public Ownable() {}
 
-    function createCoinFlip() public payable {
-        games.push((new CoinFlip).value(msg.value)(getOwner()));
+    function createCoinFlip(bool heads) public payable {
+        games.push((new CoinFlip).value(msg.value)(getOwner(), heads));
         count++;
         emit GameCreated(address(games[count - 1]));
     }
