@@ -68,7 +68,7 @@ contract CoinFlip is Ownable, Stateable, usingBlocknumber {
         super.setState(2); // 2 = 'flipped'
     }
 
-    function claim() public payable onlyOwner() onlyState(2) {
+    function claim() public onlyOwner() onlyState(2) {
         // 2 = 'flipped'
         uint256 toWinner = getValue();
         msg.sender.transfer(toWinner);
@@ -77,23 +77,16 @@ contract CoinFlip is Ownable, Stateable, usingBlocknumber {
         super.setState(3); // 3 = 'claimed'
     }
 
-    function cancel() public payable onlyOwner() onlyState(0) {
+    function cancel() public onlyOwner() onlyState(0) {
         // 0 = 'open'
-        uint256 toTransfer = g.balance;
-        msg.sender.transfer(toTransfer);
-        g.balance = g.balance - toTransfer;
-        setOwner(g.house);
-        assert(g.balance == 0);
         super.setState(5); // 5 = 'canceled'
+        selfdestruct(msg.sender);
     }
 
-    function collect() public payable onlyOwner() onlyState(3) {
-        // 3 = 'claimed'
-        uint256 toTransfer = g.balance;
-        msg.sender.transfer(toTransfer);
-        g.balance = g.balance - toTransfer;
-        assert(g.balance == 0);
+    function collect() public onlyOwner() onlyState(3) {
+        // 3 = 'claimed'        
         super.setState(4); // 4 = 'done'
+        selfdestruct(msg.sender);
     }
 
     function getValue() private view returns (uint256) {
