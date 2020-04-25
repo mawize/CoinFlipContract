@@ -2,9 +2,10 @@ pragma solidity >= 0.5.0 < 0.6.0;
 
 import "./Ownable.sol";
 import "./Stateable.sol";
-import "./ProvableAPI.sol";
+//import "./usingRandomProvable.sol";
+import "./usingBlocknumber.sol";
 
-contract CoinFlip is Ownable, Stateable, usingProvable {
+contract CoinFlip is Ownable, Stateable, usingBlocknumber {
     uint256 private constant cut = 2; // percent
 
     uint256 constant MAX_INT_FROM_BYTE = 256;
@@ -31,7 +32,7 @@ contract CoinFlip is Ownable, Stateable, usingProvable {
     // 4 = 'done'
     // 5 = 'canceled'
 
-    constructor(address casinoOwner, bool heads) public payable Ownable() Stateable(0) {
+    constructor(address casinoOwner, bool heads) public payable Stateable(0) {
         // 0 = 'open'
         require(msg.value > 1 wei, "Not enough value.");
 
@@ -44,7 +45,6 @@ contract CoinFlip is Ownable, Stateable, usingProvable {
         g.balance += msg.value;
         setOwner(g.starter);
 
-        provable_setProof(proofType_Ledger);
         assert(g.amount == g.balance);
     }
 
@@ -54,22 +54,14 @@ contract CoinFlip is Ownable, Stateable, usingProvable {
         g.joiner = tx.origin;
         g.balance += msg.value;
 
+        super.setState(1); // 1 = 'closed'
+
         // Flip the coin
-        uint256 QUERY_EXECUTION_DELAY = 0;
-        uint256 GAS_FOR_CALLBACK = 200000;
-        provable_newRandomDSQuery(
-            QUERY_EXECUTION_DELAY,
-            NUM_RANDOM_BYTES_REQUESTED,
-            GAS_FOR_CALLBACK
-        );
-        super.setState(1); // 1 = 'closed'  
+        getRandomNumber();
     }
 
-    function __callback(bytes32 _queryId, string memory _result, bytes memory _proof) public onlyState(1) {
-        require(msg.sender == provable_cbAddress());
-
-        assert(provable_randomDS_proofVerify__returnCode(_queryId, _result, _proof) == 0);
-        g.winner = (uint256(keccak256(abi.encodePacked(_result))) % 2 == 0) ? g.starter : g.joiner;
+    function receiveRandomNumber(uint256 random) internal onlyState(1) {
+        g.winner = (random % 2 == 0) ? g.starter : g.joiner;
 
         g.value = getValue();
         setOwner(g.winner);      
