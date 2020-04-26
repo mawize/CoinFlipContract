@@ -2,10 +2,10 @@ pragma solidity >= 0.5.0 < 0.6.0;
 
 import "./Ownable.sol";
 import "./Stateable.sol";
-//import "./usingRandomProvable.sol";
-import "./usingBlocknumber.sol";
+import "./usingRandomProvable.sol";
+//import "./usingBlocknumber.sol";
 
-contract CoinFlip is Ownable, Stateable, usingBlocknumber {
+contract CoinFlip is Ownable, Stateable, usingRandomProvable {
     uint256 private constant cut = 2; // percent
 
     uint256 constant MAX_INT_FROM_BYTE = 256;
@@ -35,16 +35,12 @@ contract CoinFlip is Ownable, Stateable, usingBlocknumber {
     constructor(address casinoOwner, bool heads) public payable Stateable(0) {
         // 0 = 'open'
         require(msg.value > 1 wei, "Not enough value.");
-
         g.house = casinoOwner;
-
         g.heads = heads;
-
         g.starter = tx.origin;
         g.amount = msg.value;
         g.balance += msg.value;
         setOwner(g.starter);
-
         assert(g.amount == g.balance);
     }
 
@@ -53,28 +49,26 @@ contract CoinFlip is Ownable, Stateable, usingBlocknumber {
         require(msg.value >= g.amount, "Not enough value.");
         g.joiner = tx.origin;
         g.balance += msg.value;
-
+        assert(2*g.amount <= g.balance);
+        setOwner(g.house); // while spinning
         super.setState(1); // 1 = 'closed'
-
-        // Flip the coin
-        getRandomNumber();
+        getRandomNumber(); // Flip the coin
     }
 
     function receiveRandomNumber(uint256 random) internal onlyState(1) {
         g.winner = (random % 2 == 0) ? g.starter : g.joiner;
-
         g.value = getValue();
-        setOwner(g.winner);      
+        setOwner(g.winner);
         super.setState(2); // 2 = 'flipped'
     }
 
     function claim() public onlyOwner() onlyState(2) {
         // 2 = 'flipped'
         uint256 toWinner = getValue();
-        msg.sender.transfer(toWinner);
         g.balance = g.balance - toWinner;
         setOwner(g.house);
         super.setState(3); // 3 = 'claimed'
+        msg.sender.transfer(toWinner);
     }
 
     function cancel() public onlyOwner() onlyState(0) {

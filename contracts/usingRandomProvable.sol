@@ -13,7 +13,7 @@ contract usingRandomProvable is usingProvable {
 
     function getRandomNumber() internal {
         uint256 QUERY_EXECUTION_DELAY = 0;
-        uint256 GAS_FOR_CALLBACK = 200000;
+        uint256 GAS_FOR_CALLBACK = 500000;
         provable_newRandomDSQuery(
             QUERY_EXECUTION_DELAY,
             NUM_RANDOM_BYTES_REQUESTED,
