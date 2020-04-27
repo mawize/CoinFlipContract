@@ -6,10 +6,8 @@ import "./usingRandomProvable.sol";
 //import "./usingBlocknumber.sol";
 
 contract CoinFlip is Ownable, Stateable, usingRandomProvable {
-    uint256 private constant cut = 2; // percent
-
-    uint256 constant MAX_INT_FROM_BYTE = 256;
-    uint256 constant NUM_RANDOM_BYTES_REQUESTED = 7;
+    uint256 constant ORACLE_CALLBACK_GAS = 1000000; // wei for oracle callback
+    uint256 private constant CUT = 2; // percent
 
     struct Game {
         address house;
@@ -34,7 +32,7 @@ contract CoinFlip is Ownable, Stateable, usingRandomProvable {
 
     constructor(address casinoOwner, bool heads) public payable Stateable(0) {
         // 0 = 'open'
-        require(msg.value > 1 wei, "Not enough value.");
+        require(msg.value > ORACLE_CALLBACK_GAS, "Not enough value.");
         g.house = casinoOwner;
         g.heads = heads;
         g.starter = tx.origin;
@@ -49,15 +47,16 @@ contract CoinFlip is Ownable, Stateable, usingRandomProvable {
         require(msg.value >= g.amount, "Not enough value.");
         g.joiner = tx.origin;
         g.balance += msg.value;
-        assert(2*g.amount <= g.balance);
         setOwner(g.house); // while spinning
+        assert((2*g.amount) <= g.balance);
+        g.balance -= ORACLE_CALLBACK_GAS;
+        g.value = getValue();
         super.setState(1); // 1 = 'closed'
-        getRandomNumber(); // Flip the coin
+        getRandomNumber(ORACLE_CALLBACK_GAS); // Flip the coin
     }
 
     function receiveRandomNumber(uint256 random) internal onlyState(1) {
-        g.winner = (random % 2 == 0) ? g.starter : g.joiner;
-        g.value = getValue();
+        g.winner = ((random % 2) == 0) ? g.starter : g.joiner;
         setOwner(g.winner);
         super.setState(2); // 2 = 'flipped'
     }
@@ -84,6 +83,6 @@ contract CoinFlip is Ownable, Stateable, usingRandomProvable {
     }
 
     function getValue() private view returns (uint256) {
-        return ((2*g.amount) * (100 - cut)) / 100;
+        return (((2*g.amount) - ORACLE_CALLBACK_GAS) * (100 - CUT)) / 100;
     }
 }
