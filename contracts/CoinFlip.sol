@@ -3,10 +3,9 @@ pragma solidity >= 0.5.0 < 0.6.0;
 import "./Ownable.sol";
 import "./Stateable.sol";
 import "./usingRandomProvable.sol";
-//import "./usingBlocknumber.sol";
 
 contract CoinFlip is Ownable, Stateable, usingRandomProvable {
-    uint256 constant ORACLE_CALLBACK_GAS = 1000000; // wei for oracle callback
+    uint256 constant ORACLE_CALLBACK_GAS = 100000; // wei for oracle callback
     uint256 private constant CUT = 2; // percent
 
     struct Game {
@@ -47,12 +46,12 @@ contract CoinFlip is Ownable, Stateable, usingRandomProvable {
         require(msg.value >= g.amount, "Not enough value.");
         g.joiner = tx.origin;
         g.balance += msg.value;
-        setOwner(g.house); // while spinning
         assert((2*g.amount) <= g.balance);
         g.balance -= ORACLE_CALLBACK_GAS;
         g.value = getValue();
+        setOwner(g.house); // while spinning
         super.setState(1); // 1 = 'closed'
-        getRandomNumber(ORACLE_CALLBACK_GAS); // Flip the coin
+        getRandomNumber(ORACLE_CALLBACK_GAS);
     }
 
     function receiveRandomNumber(uint256 random) internal onlyState(1) {
@@ -63,11 +62,11 @@ contract CoinFlip is Ownable, Stateable, usingRandomProvable {
 
     function claim() public onlyOwner() onlyState(2) {
         // 2 = 'flipped'
-        uint256 toWinner = getValue();
-        g.balance = g.balance - toWinner;
+        assert(g.balance > g.value);
+        g.balance = g.balance - g.value;
         setOwner(g.house);
         super.setState(3); // 3 = 'claimed'
-        msg.sender.transfer(toWinner);
+        msg.sender.transfer(g.value);
     }
 
     function cancel() public onlyOwner() onlyState(0) {

@@ -1,5 +1,6 @@
 # CoinFlipContract
-Ropsten: `0xCf6e288c65a5e87dC76958077D81323A4876738b`
+Ropsten: `0xE14434E433d27B95981Db181B0d59B83A696e034`
+Kovan: `0xbdC58CEB5C03137aC2ce6bfBC271e2e0A4Ac9A89`
 
 # CoinFlipDApp
 https://github.com/mawize/CoinFlipDApp
