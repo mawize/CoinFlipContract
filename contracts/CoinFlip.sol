@@ -5,7 +5,7 @@ import "./Stateable.sol";
 import "./usingRandomProvable.sol";
 
 contract CoinFlip is Ownable, Stateable, usingRandomProvable {
-    uint256 constant ORACLE_CALLBACK_GAS = 100000; // wei for oracle callback
+    uint256 constant MINIMUM_BET = 0.01 ether;
     uint256 private constant CUT = 2; // percent
 
     struct Game {
@@ -13,9 +13,10 @@ contract CoinFlip is Ownable, Stateable, usingRandomProvable {
         address starter;
         address joiner;
         address winner;
-        uint256 value;
-        uint256 balance;
         uint256 amount;
+        uint256 balance;
+        uint256 value;
+        uint256 fees;
         bool heads;
     }
 
@@ -29,16 +30,17 @@ contract CoinFlip is Ownable, Stateable, usingRandomProvable {
     // 4 = 'done'
     // 5 = 'canceled'
 
-    constructor(address casinoOwner, bool heads) public payable Stateable(0) {
-        // 0 = 'open'
-        require(msg.value > ORACLE_CALLBACK_GAS, "Not enough value.");
+    constructor(address casinoOwner, bool heads) public payable Stateable(1) {
+        require(msg.value > MINIMUM_BET, "Not enough value.");
         g.house = casinoOwner;
-        g.heads = heads;
         g.starter = tx.origin;
-        g.amount = msg.value;
         g.balance += msg.value;
+        g.value = msg.value;
+        g.amount = msg.value;
+        g.heads = heads;
+        
         setOwner(g.starter);
-        assert(g.amount == g.balance);
+        super.setState(0); // 0 = 'open'
     }
 
     function join() public payable onlyState(0) {
@@ -46,12 +48,17 @@ contract CoinFlip is Ownable, Stateable, usingRandomProvable {
         require(msg.value >= g.amount, "Not enough value.");
         g.joiner = tx.origin;
         g.balance += msg.value;
-        assert((2*g.amount) <= g.balance);
-        g.balance -= ORACLE_CALLBACK_GAS;
-        g.value = getValue();
+        assert((2*g.amount) <= g.balance);   
+
+        uint256 oldBalance = g.balance;
+        getRandomNumber();
+
+        g.balance = address(this).balance;
+        g.fees = oldBalance - g.balance;
+        g.value = (g.balance * (100 - CUT)) / 100;  
+
         setOwner(g.house); // while spinning
         super.setState(1); // 1 = 'closed'
-        getRandomNumber(ORACLE_CALLBACK_GAS);
     }
 
     function receiveRandomNumber(uint256 random) internal onlyState(1) {
@@ -81,7 +88,4 @@ contract CoinFlip is Ownable, Stateable, usingRandomProvable {
         selfdestruct(msg.sender);
     }
 
-    function getValue() private view returns (uint256) {
-        return (((2*g.amount) - ORACLE_CALLBACK_GAS) * (100 - CUT)) / 100;
-    }
 }

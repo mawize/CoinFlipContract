@@ -7,16 +7,17 @@ contract usingRandomProvable is usingProvable {
     uint256 constant QUERY_EXECUTION_DELAY = 0;
     uint256 constant MAX_INT_FROM_BYTE = 256;
     uint256 constant NUM_RANDOM_BYTES_REQUESTED = 7;
+    uint256 constant ORACLE_CALLBACK_GAS = 500000;
 
     constructor() public {
         provable_setProof(proofType_Ledger);
     }
 
-    function getRandomNumber(uint256 gas_for_callback) internal {
+    function getRandomNumber() internal{
         provable_newRandomDSQuery(
             QUERY_EXECUTION_DELAY,
             NUM_RANDOM_BYTES_REQUESTED,
-            gas_for_callback
+            ORACLE_CALLBACK_GAS
         );
     }
 

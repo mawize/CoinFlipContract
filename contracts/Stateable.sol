@@ -12,7 +12,7 @@ contract Stateable {
     }
 
     constructor(uint256 initial) public {
-        setState(initial);
+        state = initial;
     }
 
     function getState() public view returns (uint256) {
