@@ -143,7 +143,7 @@
     "nano-json-stream-parser": "^0.1.2",
     "negotiator": "^0.6.2",
     "next-tick": "^1.0.0",
-    "normalize-url": "^4.5.0",
+    "normalize-url": "^4.5.1",
     "oauth-sign": "^0.9.0",
     "object-assign": "^4.1.1",
     "oboe": "^2.1.4",
